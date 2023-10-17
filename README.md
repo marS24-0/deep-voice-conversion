@@ -1,71 +1,54 @@
+# deep-voice-conversion
+Transform recordings of one person’s voice into the voice of another person
 
+#### SETUP
+The forked repository is `https://github.com/nii-yamagishilab/SSL-SAS`, you can refer to it for the installation process.
+The directories generated are:
+- adapted_from_facebookresearch
+- adapted_from_speechbrain
+- adapted_from_vpc
+- configs
+- pretrained_models_anon_xv
+- scp
+- scripts
+- and others containing data.
 
-## Language independent SSL-based Speaker Anonymization system
-This is an implementation of the papers:
+#### AUDIO CONVERSION
+The directories related to the conversion are:
+- xv_extract: used for the speaker vector extraction
+- f0_extract_avg: used for f0 extraction (and averaging for the same speaker)
+- generate_xv_f0: used for audio generation, given target speaker vector and f0
+- scripts_vc: useful scripts implementing conversion pipelines, in particular
+    - convert.sh[^1] converts a single source-target pair of audios, generating the output in a new directory “output”
+    - covert_dataset.sh[^1] converts a portion of dataset (e.g. libri_dev trials_f), mainly for testing purposes; the outputs are generated in a new directory conversion, whose contents can be used for testing (ASV)
+    - other scripts are used by these two
 
-(1) [Language-independent speaker anonymization approach using self-supervised pre-trained models](https://arxiv.org/abs/2202.13097) 
+#### AUTOMATIC SPEAKER VERIFICATION
+The automatic speaker verification test is performed using the script scripts_vc/asv.sh[^1]. It is possible to perform the test both on the original audios and on the converted ones, either by adapting F0 or not.
+This script requires that the speaker vectors of the speakers in the dataset have already been extracted,  for example by running scripts_vc/convert.sh, and voice conversion has already been performed on the dataset.
 
-(2) [Analyzing Language-Independent Speaker Anonymization Framework under Unseen Conditions](https://arxiv.org/abs/2203.14834) 
+Examples of conversion with ASV:
+Test on generated data with F0 adaptation:
+```
+bash scripts_vc/convert_dataset.sh libri_dev trials_f
+bash scripts_vc/asv.sh libri_dev trials_f
+```
 
-The authors are Xiaoxiao Miao, Xin Wang, Erica Cooper, Junichi Yamagishi, Natalia Tomashenko.
+Test on generated data without F0 adaptation:
+```
+bash scripts_vc/convert_dataset.sh vctk_test trials_m --no_f0
+bash scripts_vc/asv.sh vctk_test trials_m --no_f0
+```
 
+Test on original data:
+```
+bash scripts_vc/convert_dataset.sh libri_dev trials_f # converts audios, too, if not already converted
+bash scripts_vc/asv.sh libri_dev trials_f --original
+```
 
+#### GAN TRAINING
+The directory gan-trainimg-xv contains the scritps and configuration files to train the HiFi-GAN, adding a cosine similarity term on the target and output's speaker vectors to the loss (to be tested and to adjust the terms' weigths).
+scripts_vc/gan_train.sh[^1] fine-tunes the GAN to convert a specific source-target pair, maximizing the cosine similarity of output and target's speaker vectors.
+A method to save or use the fine-tuned GAN is not provided, as its behavior is not tested.
 
-
-Audio samples can be found here:  https://nii-yamagishilab.github.io/SAS-audio-samples/
-
-Please cite these papers if you use this code.
-
-## Dependencies
-`git clone https://github.com/nii-yamagishilab/SSL-SAS.git`
-
-`cd SSL-SAS`
-
-`bash scripts/install.sh`
-
-Make sure sox and parallel are installed. 
-
-If not: 
-
-`source env.sh`
-
-`conda install -c conda-forge sox`
-
-`conda install -c conda-forge parallel`
-
-## 
-
-
-
-
-
-## English anonymization
-
-- Try pre-trained model
-
-     1. Download English development and evaluation data provided by the [VoicePrivacy2020 Challenge](https://github.com/Voice-Privacy-Challenge/Voice-Privacy-Challenge-2020): [VCTK](https://datashare.ed.ac.uk/handle/10283/3443)-subsets (vctk_dev and vctk_test) and [LibriSpeech](http://www.openslr.org/12/)-subsets (libri_dev and libri_test). Just run `bash adapted_from_vpc/00_download_testdata.sh`. The user will be requested the password, please contact [VoicePrivacy2020 Challenge organizers](https://github.com/Voice-Privacy-Challenge/Voice-Privacy-Challenge-2020).
-     2. Generate anonymized speech: `bash scripts/engl_scripts/01_demo.sh`.
-     3. Following the [VoicePrivacy2020 Challenge](https://github.com/Voice-Privacy-Challenge/Voice-Privacy-Challenge-2020) to compute the performance.
- 
-- Train a HiFi-GAN using [LibriTTS-100h](https://www.openslr.org/60/) on your own: `bash scripts/engl_scripts/02_train.sh`
-
-## Mandarin anonymization
-Mandarin models and speaker vectors are available for internal academic and research use only. If users would like to reproduce Mandarin anonymization experiments, please contact xiaoxiaomiao@nii.ac.jp. 
-
-## Acknowledgments
-This study is supported by JST CREST Grants (JPMJCR18A6 and JPMJCR20D3), MEXT KAKENHI Grants (21K17775, 21H04906, 21K11951, 18H04112), and the VoicePersonal project (ANR-18-JSTS-0001)
-
-## License
-
-The `adapted_from_facebookreaserch` subfolder has [Attribution-NonCommercial 4.0 International License](https://github.com/nii-yamagishilab/SSL-SAS/blob/main/adapted_from_facebookresearch/LICENSE). The `adapted_from_speechbrain` subfolder has [Apache License](https://github.com/nii-yamagishilab/SSL-SAS/blob/main/adapted_from_speechbrain/LICENSE). They were created by the [facebookreasearch](https://github.com/facebookresearch/speech-resynthesis/blob/main) and [speechbrain](https://github.com/speechbrain/speechbrain) orgnization, respectively. The `scripts` subfolder has the [MIT license](https://github.com/nii-yamagishilab/SSL-SAS/blob/main/scripts/LICENSE).
-
-Because this source code was adapted from the facebookresearch and speechbrain, the whole project follows  
-the [Attribution-NonCommercial 4.0 International License](https://github.com/nii-yamagishilab/SSL-SAS/blob/main/adapted_from_facebookresearch/LICENSE).
-
-Copyright (c) 2022, Yamagishi Laboratory, National Institute of Informatics.
-All rights reserved.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-
+[^1]: the script should be executed from the home directory (deep-voice-conversion)

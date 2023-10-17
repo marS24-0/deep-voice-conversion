@@ -328,6 +328,7 @@ class _BatchNorm1d(nn.Module):
             input to normalize. 2d or 3d tensors are expected in input
             4d tensors can be used when combine_dims=True.
         """
+        
         shape_or = x.shape
         if self.combine_batch_time:
             if x.ndim == 3:
@@ -339,7 +340,7 @@ class _BatchNorm1d(nn.Module):
 
         elif not self.skip_transpose:
             x = x.transpose(-1, 1)
-
+        
         x_n = self.norm(x)
 
         if self.combine_batch_time:

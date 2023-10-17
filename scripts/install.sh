@@ -2,6 +2,7 @@
 
 set -e
 
+pip_cache='../cache/pip'
 
 conda_url=https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh
 venv_dir=$PWD/venv
@@ -18,7 +19,7 @@ if [ ! -f $mark ]; then
   sh $name -b -p $venv_dir || exit 1
   . $venv_dir/bin/activate
   echo 'Installing python dependencies'
-  pip install -r requirements.txt || exit 1
+  pip --cache-dir "$pip_cache" install -r requirements.txt || exit 1
   touch $mark
 fi
 echo "if [ \$(which python) != $venv_dir/bin/python ]; then source $venv_dir/bin/activate; fi" > env.sh
